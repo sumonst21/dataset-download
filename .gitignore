@@ -1,0 +1,4 @@
+faces/
+gallery-dl/
+**/*.DS_Store
+.idea/
