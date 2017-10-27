@@ -1,9 +1,11 @@
 import argparse
 import os
 import subprocess
+import cv2
+import json
+
 from multiprocessing import Pool
 
-import cv2
 from PIL import Image
 from tqdm import tqdm
 
@@ -24,7 +26,7 @@ class ImageGetter(object):
         self.url = url
 
     def execute(self, image_range, tags):
-        with Pool(processes=4) as pool:
+        with Pool(processes=10) as pool:
             pool.map(self.Downloader(image_range, self.url), tags)
 
 
@@ -38,6 +40,8 @@ class FaceCropper(object):
     def execute(self):
         global_id = 0
         face_cascade = cv2.CascadeClassifier("./src/cascade/lbpcascade_animeface.xml")
+
+        id_to_tag = {}
 
         for root, sub_directories, files in tqdm(os.walk("./gallery-dl")):
             if files:
@@ -61,7 +65,15 @@ class FaceCropper(object):
 
                             output = "./faces/{0}_{1}.png".format(global_id, label)
                             cv2.imwrite(output, resized_image)
+
+                            id_to_tag[global_id] = label
                             global_id += 1
+
+        self.save_data(id_to_tag)
+
+    def save_data(self, id_to_tag):
+        with open("data.json", "w") as file:
+            json.dump(id_to_tag, file)
 
 
 def read_tags(tag_path):

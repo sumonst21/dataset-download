@@ -2,3 +2,4 @@ faces/
 gallery-dl/
 **/*.DS_Store
 .idea/
+data.json
