@@ -1,33 +1,37 @@
 import argparse
+import json
 import os
 import subprocess
-import cv2
-import json
-
 from multiprocessing import Pool
 
+import cv2
 from PIL import Image
 from tqdm import tqdm
 
 
+def download_images(downloader):
+    command = ["gallery-dl", downloader.image_arg, downloader.endpoint]
+    subprocess.run(command, check=True)
+
+
+class Downloader(object):
+    def __init__(self, image_range, url, tag):
+        image_indices = "{0}-{1}".format(image_range[0], image_range[1])
+        self.image_arg = "--images={0}".format(image_indices)
+        self.endpoint = "{0}{1}".format(url, tag)
+
+
 class ImageGetter(object):
-    class Downloader(object):
-        def __init__(self, image_range, url):
-            image_indices = "{0}-{1}".format(image_range[0], image_range[1])
-            self.image_arg = "--images={0}".format(image_indices)
-            self.url = url
-
-        def __call__(self, tag):
-            endpoint = "{0}{1}".format(self.url, tag)
-            command = ["gallery-dl", self.image_arg, endpoint]
-            subprocess.run(command, check=True)
-
     def __init__(self, url):
         self.url = url
 
     def execute(self, image_range, tags):
+        downloaders = []
+        for tag in tags:
+            downloaders.append(Downloader(image_range, self.url, tag))
+
         with Pool(processes=10) as pool:
-            pool.map(self.Downloader(image_range, self.url), tags)
+            pool.map(download_images, downloaders)
 
 
 class FaceCropper(object):
@@ -87,11 +91,13 @@ def main():
 
     parser.add_argument("--tags", "-t", help="Tags file", required=True, type=str)
     parser.add_argument("--download", "-d", help="Download Images (default: False)", default=False, action="store_true")
-    parser.add_argument("--crop", "-c", help="Crop Faces out of Downloaded Images (default: False)", default=False, action="store_true")
+    parser.add_argument("--crop", "-c", help="Crop Faces out of Downloaded Images (default: False)", default=False,
+                        action="store_true")
     parser.add_argument("--range", "-r", help="Image range (default: 1-100)", default="1-100")
     parser.add_argument("--width", "-W", help="Images width (default: 64)", default=64, type=int)
     parser.add_argument("--height", "-H", help="Images height (default: 64)", default=64, type=int)
-    parser.add_argument("--only-color", "-oc", help="Only colored images (default: False)", default=False, action="store_true")
+    parser.add_argument("--only-color", "-oc", help="Only colored images (default: False)", default=False,
+                        action="store_true")
 
     args = parser.parse_args()
 
