@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 def download_images(downloader):
     command = ["gallery-dl", downloader.image_arg, downloader.endpoint]
-    subprocess.run(command, check=True)
+    subprocess.call(command)
 
 
 class Downloader(object):
