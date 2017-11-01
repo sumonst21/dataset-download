@@ -17,7 +17,7 @@ def download_images(downloader):
 class Downloader(object):
     def __init__(self, image_range, url, tag):
         image_indices = "{0}-{1}".format(image_range[0], image_range[1])
-        self.image_arg = "--images={0}".format(image_indices)
+        self.image_arg = "--range={0}".format(image_indices)
         self.endpoint = "{0}{1}".format(url, tag)
 
 
