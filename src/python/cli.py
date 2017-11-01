@@ -41,11 +41,13 @@ class FaceCropper(object):
         self.crop_size = crop_size
         self.only_color = only_color
 
+    def biggest_rectangle(self, r):
+        return r[2]*r[3]
+
+
     def execute(self):
         global_id = 0
         face_cascade = cv2.CascadeClassifier("./src/cascade/lbpcascade_animeface.xml")
-
-        id_to_tag = {}
 
         for root, sub_directories, files in tqdm(os.walk("./gallery-dl")):
             if files:
@@ -59,21 +61,24 @@ class FaceCropper(object):
                         gray = cv2.equalizeHist(gray)
                         faces = face_cascade.detectMultiScale(gray, scaleFactor=1.01, minNeighbors=5, minSize=(90, 90))
 
-                        if len(faces) == 1:
-                            if self.only_color and (Image.fromarray(image).convert("RGB").getcolors() is not None):
-                                continue
+                        # No faces detected. Move On.
+                        if len(faces) == 0:
+                            continue
+                        # Only care about the biggest face.
+                        elif len(faces) > 1:
+                            sorted(faces, key=self.biggest_rectangle, reverse=True)
 
-                            x, y, w, h = faces[0]
-                            cropped_image = image[y: y + h, x: x + w, :]
-                            resized_image = cv2.resize(cropped_image, self.crop_size)
+                        if self.only_color and (Image.fromarray(image).convert('RGB').getcolors() is not None):
+                            continue
 
-                            output = "./faces/{0}_{1}.png".format(global_id, label)
-                            cv2.imwrite(output, resized_image)
+                        x, y, w, h = faces[0]
+                        cropped_image = image[y: y + h, x: x + w, :]
+                        resized_image = cv2.resize(cropped_image, self.crop_size)
 
-                            id_to_tag[global_id] = label
-                            global_id += 1
+                        output = "./faces/{0}_{1}.png".format(global_id, label)
+                        cv2.imwrite(output, resized_image)
+                        global_id += 1
 
-        self.save_data(id_to_tag)
 
     def save_data(self, id_to_tag):
         with open("data.json", "w") as file:
