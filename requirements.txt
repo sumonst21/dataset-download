@@ -1,4 +1,4 @@
-Pillow == 4.2.1
+Pillow == 10.0.1
 opencv_python == 3.3.0.10
 tqdm == 4.19.4
 gallery-dl
